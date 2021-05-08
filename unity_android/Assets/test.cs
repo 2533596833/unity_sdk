@@ -32,18 +32,25 @@ public class test : MonoBehaviour
 
     private void OnGUI() {
         try {
-            if (GUILayout.Button("相册", GUILayout.Width(200), GUILayout.Height(200))) {
+            if (GUILayout.Button("相册", GUILayout.Width(200), GUILayout.Height(100))) {
                 using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
                     using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
                         jo.Call("TakePhoto", Application.persistentDataPath);
                     }
                 }
             }
-            if (GUILayout.Button("检查相册权限", GUILayout.Width(200), GUILayout.Height(200))) {
+            if (GUILayout.Button("相机", GUILayout.Width(200), GUILayout.Height(100))) {
+                using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
+                    using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
+                        jo.Call("getPhoto", "camera",Application.persistentDataPath);
+                    }
+                }
+            }
+            if (GUILayout.Button("检查相册权限", GUILayout.Width(200), GUILayout.Height(100))) {
                 showLog(Permission.ExternalStorageRead +"==="+ Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead)+"\n"+
                     Permission.ExternalStorageWrite + "===" + Permission.HasUserAuthorizedPermission(Permission.ExternalStorageWrite));
             }
-            if (GUILayout.Button("请求相册权限", GUILayout.Width(200), GUILayout.Height(200))) {
+            if (GUILayout.Button("请求相册权限", GUILayout.Width(200), GUILayout.Height(100))) {
                 if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead)) {
                     Permission.RequestUserPermission(Permission.ExternalStorageRead);
                 }
@@ -53,7 +60,16 @@ public class test : MonoBehaviour
                 showLog(Permission.ExternalStorageRead + "==2=" + Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead) + "\n" +
                     Permission.ExternalStorageWrite + "==2=" + Permission.HasUserAuthorizedPermission(Permission.ExternalStorageWrite));
             }
-            if (GUILayout.Button("Toaset", GUILayout.Width(200), GUILayout.Height(200))) {
+            if (GUILayout.Button("检查相机权限", GUILayout.Width(200), GUILayout.Height(100))) {
+                showLog(Permission.Camera + "===" + Permission.HasUserAuthorizedPermission(Permission.Camera));
+            }
+            if (GUILayout.Button("请求相册权限", GUILayout.Width(200), GUILayout.Height(100))) {
+                if (!Permission.HasUserAuthorizedPermission(Permission.Camera)) {
+                    Permission.RequestUserPermission(Permission.Camera);
+                }
+                showLog(Permission.Camera + "===" + Permission.HasUserAuthorizedPermission(Permission.Camera));
+            }
+            if (GUILayout.Button("Toaset", GUILayout.Width(200), GUILayout.Height(100))) {
                 using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
                     using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
                         jo.Call("showToast","tttt===="+ Application.persistentDataPath);
