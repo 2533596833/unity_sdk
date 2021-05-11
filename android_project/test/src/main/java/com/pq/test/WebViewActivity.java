@@ -202,6 +202,7 @@ public class WebViewActivity extends Activity
         }else if(requestCode == PHOTOCROP) {//请求码==相机拍照结束1
             try {
                 trySaveBitmap(mCutUri);
+                if(mCutUri != null)  backCropPhotoPath(mCutUri.getPath());
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
                 finish();
@@ -252,7 +253,8 @@ public class WebViewActivity extends Activity
 //            }
 //            mCutUri = Uri.fromFile(mCutFile);
 //        }
-        mCutUri = Uri.fromFile(createFile("tempCrop.png"));
+        String time = new SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINA).format(new Date());
+        mCutUri = Uri.fromFile(createFile("tempCrop_"+time+".png"));
         intent.putExtra(MediaStore.EXTRA_OUTPUT, mCutUri);
         // 以广播方式刷新系统相册，以便能够在相册中找到刚刚所拍摄和裁剪的照片
         Intent intentBc = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
@@ -268,7 +270,6 @@ public class WebViewActivity extends Activity
         if (bitmap != null) {
             try {
                 SaveBitmap(bitmap);
-                backCropPhotoPath(imgUri.getPath());
             } catch (IOException e) {
                 finish();
                 e.printStackTrace();
