@@ -13,6 +13,9 @@ public class test : MonoBehaviour
     AndroidJavaObject unityActivity;
     public Text txt;
     public RawImage img;
+    public Toggle togle;
+    bool isCrop = false;
+    public string deletePath;
     string ttt = "";
     void Start()
     {
@@ -35,14 +38,14 @@ public class test : MonoBehaviour
             if (GUILayout.Button("相册", GUILayout.Width(200), GUILayout.Height(100))) {
                 using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
                     using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
-                        jo.Call("TakePhoto", Application.persistentDataPath);
+                        jo.Call("getPhoto", "photo", Application.persistentDataPath, isCrop);
                     }
                 }
             }
             if (GUILayout.Button("相机", GUILayout.Width(200), GUILayout.Height(100))) {
                 using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
                     using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
-                        jo.Call("getPhoto", "camera",Application.persistentDataPath);
+                        jo.Call("getPhoto", "camera",Application.persistentDataPath, isCrop);
                     }
                 }
             }
@@ -76,7 +79,7 @@ public class test : MonoBehaviour
                     }
                 }
             }
-            GUILayout.Label(ttt, GUILayout.Width(200), GUILayout.Height(200));
+            if (togle != null) isCrop = togle.isOn;
         }
         catch (Exception e) {
             showLog("OnGUI===error=====", e);
@@ -85,7 +88,13 @@ public class test : MonoBehaviour
         
 
     }
-   
+    public void callAndroid(string funName,params object[] paras) {
+        using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
+            using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
+                jo.Call(funName, paras);
+            }
+        }
+    }
 
     public void GetPhoto(string path) {
         FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
@@ -97,6 +106,18 @@ public class test : MonoBehaviour
         texture2D.LoadImage(bye);
         showLog("GetPhoto===path====", path, " texture===", texture2D);
         img.texture = texture2D;
+    }
+    public void DeletePhoto(string path) {
+        deletePath = path;
+        using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
+            using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
+                if (jo.Call<bool>("deleteFile", deletePath)) {
+                    showLog("删除图片====succ=" + deletePath);
+                } else {
+                    showLog("删除图片====error=" + deletePath);
+                }
+            }
+        }
     }
 
     public void showLog(params object[] paras) {
