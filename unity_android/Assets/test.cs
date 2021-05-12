@@ -49,9 +49,13 @@ public class test : MonoBehaviour
                 }
             }
             if (GUILayout.Button("相机", GUILayout.Width(200), GUILayout.Height(100))) {
-                using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
-                    using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
-                        jo.Call("getPhoto", "camera",Application.persistentDataPath, isCrop, isScaleBitmap, cropW, cropH);
+                if (WebCamTexture.devices.Length <= 0) {
+                    showLog("模拟器不能打开相机");
+                } else {
+                    using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
+                        using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
+                            jo.Call("getPhoto", "camera", Application.persistentDataPath, isCrop, isScaleBitmap, cropW, cropH);
+                        }
                     }
                 }
             }
