@@ -9,17 +9,21 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.security.keystore.StrongBoxUnavailableException;
 import android.util.Log;
 import android.content.ContentValues;
 import android.widget.Toast;
 import android.os.Environment;
 import android.graphics.BitmapFactory;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -46,7 +50,10 @@ public class WebViewActivity extends Activity
     private static String UnityUsePicturePath;
     private Uri mImgUri;
     private Uri mCutUri;
-    private boolean isCrop = false;
+    private boolean isCrop = false;//是否裁剪
+    private boolean isScaleBitmap = false;//是否压缩图片
+    private int cropImgWidth = 300;//裁剪图片宽度
+    private int cropImgHeight = 300;//裁剪图片高度
     private String LOG_TAG = "LOG_My";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,8 +62,12 @@ public class WebViewActivity extends Activity
         String type = this.getIntent().getStringExtra("type");
         UnityPersistentDataPath = this.getIntent().getStringExtra("UnityPersistentDataPath");
         isCrop = this.getIntent().getBooleanExtra("isCrop",false);
+        isScaleBitmap = this.getIntent().getBooleanExtra("isScaleBitmap",false);
+        cropImgWidth = this.getIntent().hasExtra("cropImgWidth") ? this.getIntent().getIntExtra("cropImgWidth",300) : 300;
+        cropImgHeight = this.getIntent().hasExtra("cropImgHeight") ? this.getIntent().getIntExtra("cropImgHeight",300) : 300;
+
         UnityUsePicturePath = UnityPersistentDataPath + "/UNITY_GALLERY_PICTUER.png";
-        showLog("WebViewActivity======"+type+"  path===="+UnityPersistentDataPath+"==UnityUsePicturePath==="+UnityUsePicturePath);
+        showLog("WebViewActivity======"+type+"  path===="+UnityPersistentDataPath+"==UnityUsePicturePath==="+UnityUsePicturePath+" isCrop="+isCrop+" isScaleBitmap"+isScaleBitmap+" cropImgWidth="+cropImgWidth+" cropImgHeight"+cropImgHeight);
         if(type.equals("photo")){
             checkPhoto();
         }else if(type.equals("camera")){
@@ -121,7 +132,8 @@ public class WebViewActivity extends Activity
     //打开相机
     public void openCamera(){
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        File imgFile = createFile("temp.png");
+        File imgFile = createFile("temp_"+getNowTime()+".png",false);
+//        File imgFile = new File(Environment.getExternalStorageDirectory()+ "/DCIM/Camera/temp.png");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             mImgUri = getImageContentUri(imgFile);
 //            mImgUri = getImageContentUri(new File(UnityUsePicturePath));
@@ -229,8 +241,8 @@ public class WebViewActivity extends Activity
         intent.putExtra("aspectY", 1);
 
         // 设置裁剪区域的宽度和高度
-        intent.putExtra("outputX", 300);
-        intent.putExtra("outputY", 300);
+        intent.putExtra("outputX", cropImgWidth);
+        intent.putExtra("outputY", cropImgHeight);
 
         // 取消人脸识别
         intent.putExtra("noFaceDetection", true);
@@ -253,8 +265,8 @@ public class WebViewActivity extends Activity
 //            }
 //            mCutUri = Uri.fromFile(mCutFile);
 //        }
-        String time = new SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINA).format(new Date());
-        mCutUri = Uri.fromFile(createFile("tempCrop_"+time+".png"));
+        String time = getNowTime();
+        mCutUri = Uri.fromFile(createFile("tempCrop_"+time+".png",true));
         intent.putExtra(MediaStore.EXTRA_OUTPUT, mCutUri);
         // 以广播方式刷新系统相册，以便能够在相册中找到刚刚所拍摄和裁剪的照片
         Intent intentBc = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
@@ -296,7 +308,11 @@ public class WebViewActivity extends Activity
             finish();
         }
         //将bitmap对象写入本地路径中
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+        if(isScaleBitmap){
+            scaleBitmap(bitmap).compress(Bitmap.CompressFormat.PNG, 100, fOut);
+        }else{
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fOut);
+        }
         try {
             fOut.flush();
         } catch (IOException e) {
@@ -313,26 +329,42 @@ public class WebViewActivity extends Activity
         backPhotoPath(path);
         finish();
     }
+    //压缩bitmap
+    public Bitmap scaleBitmap(Bitmap bitmap){
+//        BitmapFactory.Options options = new BitmapFactory.Options();
+//        options.inSampleSize = 4;
+//        ByteArrayOutputStream os = new ByteArrayOutputStream();
+//        bitmap.compress(Bitmap.CompressFormat.PNG, 100, os);
+//        byte[] bts = os.toByteArray();
+//        Bitmap bbb = BitmapFactory.decodeByteArray(bts,0,bts.length,options);
+        //缩放法压缩（martix）
+        Matrix matrix = new Matrix();
+        matrix.setScale(0.5f,0.5f);
+        Bitmap bm = Bitmap.createBitmap(bitmap,0,0,bitmap.getWidth(),bitmap.getHeight(),matrix,true);
+        return bm;
+    }
 
 
-    public File createFile(String name){
+    public File createFile(String name,boolean create ){
         File file = new File(Environment.getExternalStorageDirectory()+ "/DCIM/Camera/"+name);
-        try
-        {
-            if(file.exists())
+        if(create){
+            try
             {
-                file.delete();
-            }
+                if(file.exists())
+                {
+                    file.delete();
+                }
 //            file.getParentFile().mkdirs();
-            file.createNewFile();
+                file.createNewFile();
 //            FileOutputStream fout = new FileOutputStream(file);
 //            fout.write(0);
 //            fout.flush();
 //            fout.close();
-            showLog("createFile===succ="+file.getPath());
-        }catch(IOException e)
-        {
-            e.printStackTrace();
+                showLog("createFile===succ="+file.getPath());
+            }catch(IOException e)
+            {
+                e.printStackTrace();
+            }
         }
         return file;
     }
@@ -389,7 +421,10 @@ public class WebViewActivity extends Activity
         }
         return imageUri;
     }
-
+    //获取当前时间文本
+    public String getNowTime(){
+        return new SimpleDateFormat("yyyyMMddHHmmss", Locale.CHINA).format(new Date());
+    }
     //返回图片路径
     public void backPhotoPath(String str){
         CallAndroid.GetPhoto(str);

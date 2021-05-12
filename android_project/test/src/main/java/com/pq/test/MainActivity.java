@@ -36,12 +36,15 @@ public class MainActivity extends UnityPlayerActivity {
         this.startActivity(intent);
     }
     // Unity中会调用这个方法，用于获取照片 相册或者相机
-    public void getPhoto(String type,String path,boolean isCrop){
-        Log.d(LOG_TAG,"getPhoto====type==="+type+" path==="+path);
+    public void getPhoto(String type,String path,boolean isCrop,boolean isScaleBitmap,int cropImgWidth,int cropImgHeight){
+        Log.d(LOG_TAG,"getPhoto====type==="+type+" path==="+path+" isCrop="+isCrop+" isScaleBitmap"+isScaleBitmap+" cropImgWidth="+cropImgWidth+" cropImgHeight"+cropImgHeight);
         Intent intent = new Intent(mContext,WebViewActivity.class);
         intent.putExtra("type", type);//传给跳转的Activity 参数一是键 参数二是值
         intent.putExtra("UnityPersistentDataPath", path);
         intent.putExtra("isCrop", isCrop);
+        intent.putExtra("isScaleBitmap", isScaleBitmap);
+        intent.putExtra("cropImgWidth", cropImgWidth);
+        intent.putExtra("cropImgHeight", cropImgHeight);
         this.startActivity(intent);
     }
     public boolean deleteFile(String path){

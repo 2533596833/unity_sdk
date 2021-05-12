@@ -13,8 +13,14 @@ public class test : MonoBehaviour
     AndroidJavaObject unityActivity;
     public Text txt;
     public RawImage img;
-    public Toggle togle;
+    public Toggle cropTogle;//是否裁剪
+    public Toggle scaleBitmapTogle;//是否裁剪
+    public InputField wInput;
+    public InputField hInput;
     bool isCrop = false;
+    bool isScaleBitmap = false;
+    int cropW = 300;
+    int cropH = 300;
     public string deletePath;
     string ttt = "";
     void Start()
@@ -38,14 +44,14 @@ public class test : MonoBehaviour
             if (GUILayout.Button("相册", GUILayout.Width(200), GUILayout.Height(100))) {
                 using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
                     using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
-                        jo.Call("getPhoto", "photo", Application.persistentDataPath, isCrop);
+                        jo.Call("getPhoto", "photo", Application.persistentDataPath, isCrop, isScaleBitmap,cropW,cropH);
                     }
                 }
             }
             if (GUILayout.Button("相机", GUILayout.Width(200), GUILayout.Height(100))) {
                 using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
                     using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
-                        jo.Call("getPhoto", "camera",Application.persistentDataPath, isCrop);
+                        jo.Call("getPhoto", "camera",Application.persistentDataPath, isCrop, isScaleBitmap, cropW, cropH);
                     }
                 }
             }
@@ -79,7 +85,18 @@ public class test : MonoBehaviour
                     }
                 }
             }
-            if (togle != null) isCrop = togle.isOn;
+            if (cropTogle != null) isCrop = cropTogle.isOn;
+            if (scaleBitmapTogle != null) isScaleBitmap = scaleBitmapTogle.isOn;
+            if (wInput != null) {
+                if(int.TryParse(wInput.text,out int r)) {
+                    cropW = r;
+                }
+            }
+            if (hInput != null) {
+                if (int.TryParse(hInput.text, out int r)) {
+                    cropH = r;
+                }
+            }
         }
         catch (Exception e) {
             showLog("OnGUI===error=====", e);
@@ -109,15 +126,26 @@ public class test : MonoBehaviour
     }
     public void DeletePhoto(string path) {
         deletePath = path;
-        using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
-            using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
-                if (jo.Call<bool>("deleteFile", deletePath)) {
-                    showLog("删除图片====succ=" + deletePath);
-                } else {
-                    showLog("删除图片====error=" + deletePath);
-                }
+        try {
+            FileInfo ff = new FileInfo(path);
+            if (ff != null && ff.Exists) {
+                ff.Delete();
+                showLog("DeletePhoto===fileinfo===succ==path==", path);
             }
         }
+        catch (Exception e) {
+            showLog("DeletePhoto====fileinfo===error=====", e);
+            
+        }
+        //using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
+        //    using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
+        //        if (jo.Call<bool>("deleteFile", deletePath)) {
+        //            showLog("删除图片====succ=" + deletePath);
+        //        } else {
+        //            showLog("删除图片====error=" + deletePath);
+        //        }
+        //    }
+        //}
     }
 
     public void showLog(params object[] paras) {
