@@ -23,6 +23,8 @@ public class test : MonoBehaviour
     int cropH = 300;
     public string deletePath;
     string ttt = "";
+    public Button setAppDefaultIcon;
+    public Button setAppIcon1;
     void Start()
     {
         try {
@@ -37,6 +39,16 @@ public class test : MonoBehaviour
         //gallerySdk = new AndroidJavaClass("com.pq.android.CameraManager");
         //AndroidJavaClass player = new AndroidJavaClass("com.unity3d.player.UnityPlsayer");
         //unityActivity = player.GetStatic<AndroidJavaObject>("currentActivity");
+        if(setAppDefaultIcon != null) {
+            setAppDefaultIcon.onClick.AddListener(()=> {
+                changeAppIcon();
+            });
+        }
+        if (setAppIcon1 != null) {
+            setAppIcon1.onClick.AddListener(() => {
+                changeAppIcon(1);
+            });
+        }
     }
 
     private void OnGUI() {
@@ -116,6 +128,13 @@ public class test : MonoBehaviour
             }
         }
     }
+    public T callAndroid<T>(string funName, params object[] paras) {
+        using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
+            using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
+                return jo.Call<T>(funName, paras);
+            }
+        }
+    }
 
     public void GetPhoto(string path) {
         FileStream fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
@@ -150,6 +169,34 @@ public class test : MonoBehaviour
         //        }
         //    }
         //}
+    }
+
+
+    public void changeAppIcon(int type=0) {
+        showLog("type======",type);
+        try {
+            string usIcon = "";
+            using (AndroidJavaClass jc = new AndroidJavaClass("com.unity3d.player.UnityPlayer")) {
+                using (AndroidJavaObject jo = jc.GetStatic<AndroidJavaObject>("currentActivity")) {
+                    usIcon = jo.Call<string>("InitCurUseIconInfo", "appIcon1");
+                }
+            }
+            showLog("switch type  changeAppIcon========usIcon=", usIcon);
+            switch (type) {
+                case 0://恢复默认
+                    var res0 = callAndroid<bool>("changeIcon", "", true);
+                    showLog("changeAppIcon=====type=", type, " res==", res0);
+                    break;
+                case 1:
+                    var res1 = callAndroid<bool>("changeIcon", "appIcon1", false);
+                    showLog("changeAppIcon=====type=", type, " res==", res1);
+                    break;
+            }
+        }
+        catch (Exception e) {
+            showLog("changeAppIcon error=====", e);
+        }
+       
     }
 
     public void showLog(params object[] paras) {
